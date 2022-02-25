@@ -172,7 +172,7 @@ public class ClientControlleur {
             if (checkToken(tc) == false) {
                 map.put("message", "Token expire, veuillez vous reconnecter");
             } else {
-                sr.deleteById(idSignalement);
+                sr.deleteById(Long.parseLong(idSignalement));
                 MongoOperations mo = new MongoTemplate(MongoClients.create(), "photoSignalement");
                 mo.findAndRemove(new Query(Criteria.where("idSignalement").is(idSignalement)), Photos.class);
                 map.put("message", Boolean.TRUE);
