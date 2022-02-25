@@ -37,7 +37,7 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 @RequestMapping("/api/client")
 public class ClientControlleur {
 
-    public ClientControlleur(PhotosRepository pr, ClientRepository cr, SignalementCompletRepository scr, SignalementRepository sr, FileStorageRepository fsr, TokenClientRepository tcr, TypesignalementRepository tsr) {
+    public ClientControlleur(PhotosRepository pr, ClientRepository cr, SignalementCompletRepository scr, SignalementRepository sr, FileStorageRepository fsr, TokenClientRepository tcr, TypeSignalementRepository tsr) {
         this.pr = pr;
         this.cr = cr;
         this.scr = scr;
@@ -66,7 +66,7 @@ public class ClientControlleur {
     TokenClientRepository tcr;
 
     @Autowired
-    TypesignalementRepository tsr;
+    TypeSignalementRepository tsr;
 
     private Boolean checkToken(TokenClient tc) {
         if (tc.getDateexpiration().isAfter(LocalDateTime.now()) == true) {
