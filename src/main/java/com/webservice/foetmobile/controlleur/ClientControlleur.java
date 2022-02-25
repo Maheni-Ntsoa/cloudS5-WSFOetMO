@@ -1,45 +1,54 @@
 package com.webservice.foetmobile.controlleur;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoClients;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.webservice.foetmobile.exception.ResourceNotFoundException;
-import com.webservice.foetmobile.modele.Client;
-import com.webservice.foetmobile.modele.Photos;
-import com.webservice.foetmobile.modele.Signalement;
-import com.webservice.foetmobile.modele.SignalementComplet;
-import com.webservice.foetmobile.repository.ClientRepository;
-import com.webservice.foetmobile.repository.PhotosRepository;
-import com.webservice.foetmobile.repository.SignalementCompletRepository;
+import com.webservice.foetmobile.modele.*;
+import com.webservice.foetmobile.repository.*;
+import org.bson.BsonBinarySubType;
+import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
-@CrossOrigin(origins = "http://localhost:8080")
 @RestController
-@RequestMapping("/client/")
+@CrossOrigin(origins = "http://localhost:8100")
+@RequestMapping("/api/client")
 public class ClientControlleur {
 
-    public ClientControlleur() {
-        System.out.println("ClientControlleur()");
+    public ClientControlleur(PhotosRepository pr, ClientRepository cr, SignalementCompletRepository scr, SignalementRepository sr, FileStorageRepository fsr, TokenClientRepository tcr, TypesignalementRepository tsr) {
+        this.pr = pr;
+        this.cr = cr;
+        this.scr = scr;
+        this.sr = sr;
+        this.fsr = fsr;
+        this.tcr = tcr;
+        this.tsr = tsr;
     }
 
     @Autowired
-    PhotosRepository photosRepository;
+    PhotosRepository pr;
 
     @Autowired
     ClientRepository cr;
@@ -47,107 +56,168 @@ public class ClientControlleur {
     @Autowired
     SignalementCompletRepository scr;
 
-    @PostMapping(value = "/login/{username}/{mdp}")
-    public ResponseEntity<Client> loginClient(@PathVariable("username") String username, @PathVariable("mdp") String mdp) throws ResourceNotFoundException, NoSuchAlgorithmException {
-        // Creation SHA-256
+    @Autowired
+    SignalementRepository sr;
+
+    @Autowired
+    FileStorageRepository fsr;
+
+    @Autowired
+    TokenClientRepository tcr;
+
+    @Autowired
+    TypesignalementRepository tsr;
+
+    private Boolean checkToken(TokenClient tc) {
+        if (tc.getDateexpiration().isAfter(LocalDateTime.now()) == true) {
+            return true;
+        }
+        return false;
+    }
+
+    private String creationSha256(String mdp) throws NoSuchAlgorithmException {
+//         Creation SHA -256
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] hashInBytes = md.digest(mdp.getBytes(StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
         for (byte b : hashInBytes) {
             sb.append(String.format("%02x", b));
         }
-
-        Client client = new Client();
-        List<Client> lc = new ArrayList<Client>();
-        try {
-            lc = cr.findByUsernameAndMdp(username, "\\x" + sb.toString());
-            if (lc.size() == 1) {
-                for (Client cl : lc) {
-                    client = cl;
-                }
-            }
-        } catch (Exception e) {
-            throw new ResourceNotFoundException("Client not found");
-        }
-        return ResponseEntity.ok().body(client);
+        String mdpSha256 = "\\x" + sb.toString();
+        return mdpSha256;
     }
 
-    @PostMapping(value = "/clients/{nom}/{prenom}/{username}/{mdp}")
-    public HashMap inscriptionClient(@PathVariable("nom") String nom,
-                                     @PathVariable("prenom") String prenom,
-                                     @PathVariable("username") String username,
-                                     @PathVariable("mdp") String mdp) throws ResourceNotFoundException {
-        HashMap<String, Boolean> map = new HashMap<String, Boolean>();
-        try {
-            // Creation SHA-256
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashInBytes = md.digest(mdp.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashInBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            String mdpSha256 = "\\x" + sb.toString();
+    @PostMapping(value = "/login")
+    public ResponseEntity<Map<String, String>> loginClient(@RequestBody Client client) {
+        Map<String, String> map = new HashMap<>();
+        String token = "";
+        List<Client> la = cr.findByEmailAndMdp(client.getEmail(), client.getMdp());
+        if (la.size() == 1) {
+            token = cr.generateToken(la.get(0));
+            Date input = new Date();
+            LocalDateTime localDate = input.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            LocalDateTime plusMinutes = localDate.plusMinutes(30);
 
-            cr.inscriptionClient(nom, prenom, username, mdpSha256);
-            map.put("inserer", Boolean.TRUE);
-            return map;
+            tcr.insertToken(la.get(0).getId(), token, plusMinutes);
+            map.put("Token", token);
+        } else {
+            map.put("message", "Verifier vos informations");
+        }
+        return ResponseEntity.ok(map);
+    }
+
+    @PostMapping(value = "/inscription")
+    public Client inscriptionClient(@Valid @RequestBody Client client) throws ResourceNotFoundException {
+        return cr.save(client);
+    }
+
+    @GetMapping("/typesignalement/all")
+    public ResponseEntity<Map> findAllTypeSignalement() {
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            map.put("data", tsr.findAll());
+            return new ResponseEntity<>(map, HttpStatus.OK);
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Incription error, please check");
+            map.put("message", e.getMessage());
+            return new ResponseEntity<>(map, HttpStatus.OK);
         }
     }
 
-    @PostMapping("/signalements/{idClient}/{designation}/{idtypesignalement}" +
-            "/{idregion}/{idstatut}/{latitude}/{longitude}/{nomsphotos}")
-    public HashMap envoiSignalement(@PathVariable("idClient") Long idClient,
-                                 @PathVariable("designation") String designation,
-                                 @PathVariable("idtypesignalement") Long idtypesignalement,
-                                 @PathVariable("idregion") Long idregion,
-                                 @PathVariable("idstatut") Long idstatut,
-                                 @PathVariable("latitude") String latitude,
-                                 @PathVariable("nomsphotos") String[] nomsphotos, @PathVariable("longitude") String longitude) throws ResourceNotFoundException {
-        HashMap<String, Boolean> map = new HashMap<String, Boolean>();
-        Photos photos = new Photos();
-        try {
-            cr.envoiSignalement(idClient, designation, idtypesignalement, idregion, idstatut, latitude, longitude);
+    @PostMapping("/signalements/insert")
+    public ResponseEntity<HashMap> insert(HttpServletRequest request, @RequestParam String es, @RequestParam MultipartFile file1) throws IOException {
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        Photos sary = new Photos();
+        String token = (String) request.getHeader("Authorization");
+        System.out.println(token);
+        Signalement s = sr.findLast();
+        System.out.println("idSignalementLast : " + s.getId());
+        Signalement signa = new Signalement();
 
-            Signalement s = cr.findByIdClient(idClient);
+        TokenClient tc = tcr.findByToken(token.substring(7));
+        if (checkToken(tc) == false) {
+            map.put("message", "Token expire, veuillez vous reconnecter");
+        } else {
+            ObjectMapper objm = new ObjectMapper();
+            signa = objm.readValue(es, Signalement.class);
+            cr.envoiSignalement(tc.getIdclient(), signa.getDesignation(), signa.getIdtypesignalement(), signa.getLatitude(), signa.getLongitude());
+            Binary[] nomsphotos = new Binary[1];
+            nomsphotos[0] = new Binary(BsonBinarySubType.BINARY, file1.getBytes());
+//            nomsphotos[1] = new Binary(BsonBinarySubType.BINARY, es.getFile2().getBytes());
+//            nomsphotos[2] = new Binary(BsonBinarySubType.BINARY, es.getFile3().getBytes());
 
-            photos.setIdclient(idClient.toString());
-            photos.setIdSignalement(s.getId().toString());
-            photos.setPhotos(nomsphotos);
+            Long t = s.getId() + 1;
+
+            sary.setIdclient(tc.getIdclient().toString());
+            System.out.println("idclient " + sary.getIdclient());
+            sary.setIdSignalement(t.toString());
+            System.out.println("idSignalement " + sary.getIdSignalement());
+            sary.setPhotos(nomsphotos);
+            System.out.println("nomphotos " + sary.getPhotos()[0]);
+
             MongoOperations mo = new MongoTemplate(MongoClients.create(), "photoSignalement");
-            mo.insert(photos, "photos");
+            mo.insert(sary, "photos");
+
             map.put("envoiSignalement", Boolean.TRUE);
-            return map;
-        } catch (Exception e) {
-            throw new ResourceNotFoundException("Erreur d'envoi du signalement, verifier");
         }
+        return ResponseEntity.ok(map);
     }
 
-    @GetMapping(value = "/signalements/{idclient}")
-    public ResponseEntity<List<SignalementComplet>> listeSignalementParIdClient(@PathVariable("idclient") Long idclient) throws ResourceNotFoundException {
-        List<SignalementComplet> lsc = new ArrayList<SignalementComplet>();
+    @DeleteMapping(value = "/signalements/{idSignalemet}")
+    public ResponseEntity<Map> deleteSignalement(HttpServletRequest request,
+                                                 @PathVariable("idSignalement") String idSignalement) {
+        String token = (String) request.getHeader("Authorization");
+        TokenClient tc = tcr.findByToken(token.substring(7));
+        Map<String, Object> map = new HashMap<String, Object>();
         try {
-            lsc = scr.findByIdclient(idclient);
+            if (checkToken(tc) == false) {
+                map.put("message", "Token expire, veuillez vous reconnecter");
+            } else {
+                sr.deleteById(idSignalement);
+                MongoOperations mo = new MongoTemplate(MongoClients.create(), "photoSignalement");
+                mo.findAndRemove(new Query(Criteria.where("idSignalement").is(idSignalement)), Photos.class);
+                map.put("message", Boolean.TRUE);
+            }
+            return new ResponseEntity<>(map, HttpStatus.OK);
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Signalements not found for this id :: " + idclient);
+            map.put("message", e.getMessage());
+            return new ResponseEntity<>(map, HttpStatus.OK);
         }
-        return ResponseEntity.ok().body(lsc);
     }
 
-    @GetMapping("/signalements?idclient={idclient}&idsignalement={idsignalement}")
-    public HashMap seeMoreSignalement(@PathVariable(value = "idclient") Long idclient, @PathVariable(value = "idsignalement") Long idsignalement, Model m) throws ResourceNotFoundException {
+    @GetMapping(value = "/signalements")
+    public ResponseEntity<Map> listeSignalementParIdClient(HttpServletRequest request) {
+        List<SignalementComplet> lsc = new ArrayList<SignalementComplet>();
+        String token = (String) request.getHeader("Authorization");
+        TokenClient tc = tcr.findByToken(token.substring(7));
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            if (checkToken(tc) == false) {
+                map.put("message", "Token expire, veuillez vous reconnecter");
+            } else {
+                lsc = scr.findByIdclient(tc.getIdclient());
+                map.put("data", lsc);
+            }
+            return new ResponseEntity<>(map, HttpStatus.OK);
+        } catch (Exception e) {
+            map.put("message", e.getMessage());
+            return new ResponseEntity<>(map, HttpStatus.OK);
+        }
+    }
+
+    @GetMapping("/signalements/voirplus/{idsignalement}")
+    public ResponseEntity<HashMap> seeMoreSignalement(HttpServletRequest request, @PathVariable(value = "idsignalement") Long idsignalement) {
         Photos photos = new Photos();
         HashMap<String, Object> map = new HashMap<>();
-        try {
+        String token = (String) request.getHeader("Authorization");
+        TokenClient tc = tcr.findByToken(token.substring(7));
+        if (checkToken(tc) == false) {
+            map.put("message", "Token expire, veuillez vous reconnecter");
+        } else {
             MongoOperations mo = new MongoTemplate(MongoClients.create(), "photoSignalement");
-            photos = mo.findOne(new Query(where("idClient").is(idclient.toString()).and("idSignalement").is(idsignalement.toString())), Photos.class);
+            photos = mo.findOne(new Query(where("idClient").is(tc.getIdclient().toString()).and("idSignalement").is(idsignalement.toString())), Photos.class);
             map.put("lesPhotos", photos);
-            map.put("signalements", scr.findByIdclientAndAndId(idclient, idsignalement));
-        } catch (Exception e) {
-            throw new ResourceNotFoundException("Signalements not found for this id :: " + idclient);
+            map.put("signalements", scr.findByIdclientAndAndId(Long.parseLong(tc.getIdclient().toString()), idsignalement));
         }
-        return map;
+        return new ResponseEntity<>(map, HttpStatus.OK);
     }
-
 }

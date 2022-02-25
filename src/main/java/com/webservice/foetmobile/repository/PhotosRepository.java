@@ -9,4 +9,8 @@ import javax.transaction.Transactional;
 @Repository
 @Transactional
 public interface PhotosRepository extends MongoRepository<Photos, String> {
+
+    public default void savePhoto(Photos photo) {
+        this.save(photo);
+    }
 }

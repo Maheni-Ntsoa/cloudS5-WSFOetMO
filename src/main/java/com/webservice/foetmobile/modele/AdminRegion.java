@@ -1,14 +1,20 @@
 package com.webservice.foetmobile.modele;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
-@Table(name = "AdminRegion")
+@Table(name = "adminregion")
 public class AdminRegion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,8 +26,8 @@ public class AdminRegion {
     @Column(name = "prenom")
     private String prenom;
 
-    @Column(name = "username")
-    private String username;
+    @Column(name = "email")
+    private String email;
 
     @Column(name = "mdp")
     private String mdp;
@@ -29,17 +35,16 @@ public class AdminRegion {
     @Column(name = "idregion")
     private Long idregion;
 
-    public AdminRegion() {
-        super();
-    }
-
-    public AdminRegion(String nom,String prenom, String username, String mdp, Long idregion) {
-        super();
-        this.nom = nom;
-        this.prenom = prenom;
-        this.username = username;
-        this.mdp = mdp;
-        this.idregion = idregion;
+    private String creationSha256(String mdp) throws NoSuchAlgorithmException {
+//         Creation SHA -256
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hashInBytes = md.digest(mdp.getBytes(StandardCharsets.UTF_8));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashInBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        String mdpSha256 = "\\x" + sb.toString();
+        return mdpSha256;
     }
 
     public Long getId() {
@@ -66,20 +71,21 @@ public class AdminRegion {
         this.prenom = prenom;
     }
 
-    public String getUsername() {
-        return username;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getMdp() {
         return mdp;
     }
 
-    public void setMdp(String mdp) {
-        this.mdp = mdp;
+    public void setMdp(String mdp) throws NoSuchAlgorithmException {
+        String mdpT = creationSha256(mdp);
+        this.mdp = mdpT;
     }
 
     public Long getIdregion() {

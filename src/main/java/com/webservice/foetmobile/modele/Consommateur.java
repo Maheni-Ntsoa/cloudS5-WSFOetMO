@@ -9,14 +9,14 @@ public class Consommateur {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "username")
-    private String username;
+    @Column(name = "email")
+    private String email;
 
     @Column(name = "mdp")
     private String mdp;
 
-    public Consommateur(String username, String mdp) {
-        this.username = username;
+    public Consommateur(String email, String mdp) {
+        this.email = email;
         this.mdp = mdp;
     }
 
@@ -31,12 +31,12 @@ public class Consommateur {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String username) {
+        this.email = username;
     }
 
     public String getMdp() {

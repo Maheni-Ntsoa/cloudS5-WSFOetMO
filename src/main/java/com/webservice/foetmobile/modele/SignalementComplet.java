@@ -18,17 +18,19 @@ import java.time.LocalDateTime;
         "        idStatut,\n" +
         "        nom,\n" +
         "        prenom,\n" +
-        "        username,\n" +
+        "        email,\n" +
         "        dateHeure,\n" +
         "        designation,\n" +
         "        typeSignalement,\n" +
         "        nomRegion,\n" +
-        "        nomStatut\n" +
+        "        nomStatut,\n" +
+        "        latitude,\n" +
+        "        longitude\n" +
         "    FROM signalement_complet\n" +
         "    GROUP BY id, idClient, idTypeSignalement,\n" +
-        "            idRegion, idStatut, nom, prenom, username,\n" +
+        "            idRegion, idStatut, nom, prenom, email,\n" +
         "            dateHeure, designation,\n" +
-        "            typeSignalement, nomRegion, nomStatut ")
+        "            typeSignalement, nomRegion, nomStatut,latitude,longitude ")
 public class SignalementComplet {
 
     @Id
@@ -39,12 +41,14 @@ public class SignalementComplet {
     private Long idstatut;
     private String nom;
     private String prenom;
-    private String username;
+    private String email;
     private LocalDateTime dateheure;
     private String designation;
     private String typesignalement;
     private String nomregion;
     private String nomstatut;
+    private String latitude;
+    private String longitude;
 
     public Long getId() {
         return id;
@@ -102,12 +106,12 @@ public class SignalementComplet {
         this.prenom = prenom;
     }
 
-    public String getUsername() {
-        return username;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String username) {
+        this.email = username;
     }
 
     public LocalDateTime getDateheure() {
@@ -148,6 +152,22 @@ public class SignalementComplet {
 
     public void setNomstatut(String nomstatut) {
         this.nomstatut = nomstatut;
+    }
+
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
     }
 }
 

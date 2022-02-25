@@ -11,8 +11,8 @@ public class Signalement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "idClient")
-    private Long idClient;
+    @Column(name = "idclient")
+    private Long idclient;
 
     @Column(name = "dateheure")
     private LocalDateTime dateheure;
@@ -39,9 +39,9 @@ public class Signalement {
         super();
     }
 
-    public Signalement(Long idClient, LocalDateTime dateheure, String designation, Long idtypesignalement, Long idregion, Long idstatut, String latitude, String longitude) {
+    public Signalement(Long idclient, LocalDateTime dateheure, String designation, Long idtypesignalement, Long idregion, Long idstatut, String latitude, String longitude) {
         super();
-        this.idClient = idClient;
+        this.idclient = idclient;
         this.dateheure = dateheure;
         this.designation = designation;
         this.idtypesignalement = idtypesignalement;
@@ -59,12 +59,12 @@ public class Signalement {
         this.id = id;
     }
 
-    public Long getIdClient() {
-        return idClient;
+    public Long getIdclient() {
+        return idclient;
     }
 
-    public void setIdClient(Long idClient) {
-        this.idClient = idClient;
+    public void setIdclient(Long idclient) {
+        this.idclient = idclient;
     }
 
     public LocalDateTime getDateheure() {
