@@ -21,23 +21,26 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "        idStatut,\n" +
             "        nom,\n" +
             "        prenom,\n" +
-            "        username,\n" +
+            "        email,\n" +
             "        dateHeure,\n" +
             "        designation,\n" +
             "        typeSignalement,\n" +
             "        nomRegion,\n" +
-            "        nomStatut\n" +
+            "        nomStatut,\n" +
+            "        latitude,\n" +
+            "        longitude\n" +
             "    FROM signalement_complet\n " +
-            "\t where idtypesignalement = :idtypesignalement\n" +
-            "   and dateheure between :dateheure1 and :dateheure2 and idstatut = :idstatut\n" +
+            "\t where typesignalement = :idtypesignalement and idregion= :idregion\n" +
+            "   and dateheure between :dateheure1 and :dateheure2 and nomstatut = :idstatut\n" +
             "    GROUP BY id, idClient, idTypeSignalement,\n" +
-            "            idRegion, idStatut, nom, prenom, username,\n" +
+            "            idRegion, idStatut, nom, prenom, email,\n" +
             "            dateHeure, designation,\n" +
-            "            typeSignalement, nomRegion, nomStatut ", nativeQuery = true)
-    List<SignalementComplet> findByIdTypesignalementAndDateheure1AndDateheure2AndIdtatut(@Param("idtypesignalement") Long idtypesignalement,
-                                                                               @Param("dateheure1") LocalDateTime dateheure1,
-                                                                               @Param("dateheure2") LocalDateTime dateheure2,
-                                                                               @Param("idstatut") Long idstatut);
+            "            typeSignalement, nomRegion, nomStatut,latitude,longitude ", nativeQuery = true)
+    List<SignalementComplet> findByIdTypesignalementAndDateheure1AndDateheure2AndIdstatut(@Param("idtypesignalement") String typesignalement,
+                                                                                          @Param("dateheure1") LocalDateTime dateheure1,
+                                                                                          @Param("dateheure2") LocalDateTime dateheure2,
+                                                                                          @Param("idstatut") String statut,
+                                                                                          @Param("idregion") Long idregion);
 
     @Query(value = "SELECT  id,\n" +
             "        idClient,\n" +
@@ -46,18 +49,20 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "        idStatut,\n" +
             "        nom,\n" +
             "        prenom,\n" +
-            "        username,\n" +
+            "        email,\n" +
             "        dateHeure,\n" +
             "        designation,\n" +
             "        typeSignalement,\n" +
             "        nomRegion,\n" +
-            "        nomStatut\n" +
+            "        nomStatut,\n" +
+            "        latitude,\n" +
+            "        longitude\n" +
             "    FROM signalement_complet\n" +
             "\t where idregion = :idregion\n" +
             "    GROUP BY id, idClient, idTypeSignalement,\n" +
-            "            idRegion, idStatut, nom, prenom, username,\n" +
+            "            idRegion, idStatut, nom, prenom, email,\n" +
             "            dateHeure, designation,\n" +
-            "            typeSignalement, nomRegion, nomStatut ", nativeQuery = true)
+            "            typeSignalement, nomRegion, nomStatut ,latitude,longitude", nativeQuery = true)
     List<SignalementComplet> findByIdregion(@Param("idregion") Long idregion);
 
     @Query(value = "SELECT  id,\n" +
@@ -67,7 +72,7 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "        idStatut,\n" +
             "        nom,\n" +
             "        prenom,\n" +
-            "        username,\n" +
+            "        email,\n" +
             "        dateHeure,\n" +
             "        designation,\n" +
             "        typeSignalement,\n" +
@@ -76,7 +81,7 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "    FROM signalement_complet\n" +
             "\t where idtypesignalement = :idtypesignalement\n" +
             "    GROUP BY id, idClient, idTypeSignalement,\n" +
-            "            idRegion, idStatut, nom, prenom, username,\n" +
+            "            idRegion, idStatut, nom, prenom, email,\n" +
             "            dateHeure, designation,\n" +
             "            typeSignalement, nomRegion, nomStatut ", nativeQuery = true)
     List<SignalementComplet> findByIdTypesignalement(@Param("idtypesignalement") Long idtypesignalement);
@@ -88,7 +93,7 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "        idStatut,\n" +
             "        nom,\n" +
             "        prenom,\n" +
-            "        username,\n" +
+            "        email,\n" +
             "        dateHeure,\n" +
             "        designation,\n" +
             "        typeSignalement,\n" +
@@ -97,7 +102,7 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "    FROM signalement_complet\n" +
             "\t where idclient = :idclient\n" +
             "    GROUP BY id, idClient, idTypeSignalement,\n" +
-            "            idRegion, idStatut, nom, prenom, username,\n" +
+            "            idRegion, idStatut, nom, prenom, email,\n" +
             "            dateHeure, designation,\n" +
             "            typeSignalement, nomRegion, nomStatut ", nativeQuery = true)
     List<SignalementComplet> findByIdclient(@Param("idclient") Long idclient);
@@ -109,7 +114,7 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "        idStatut,\n" +
             "        nom,\n" +
             "        prenom,\n" +
-            "        username,\n" +
+            "        email,\n" +
             "        dateHeure,\n" +
             "        designation,\n" +
             "        typeSignalement,\n" +
@@ -118,9 +123,30 @@ public interface SignalementCompletRepository extends JpaRepository<SignalementC
             "    FROM signalement_complet\n" +
             "\t where idclient = :idclient and id = :id \n" +
             "    GROUP BY id, idClient, idTypeSignalement,\n" +
-            "            idRegion, idStatut, nom, prenom, username,\n" +
+            "            idRegion, idStatut, nom, prenom, email,\n" +
             "            dateHeure, designation,\n" +
             "            typeSignalement, nomRegion, nomStatut ", nativeQuery = true)
     SignalementComplet findByIdclientAndAndId(@Param("idclient") Long idclient,
                                               @Param("id") Long id);
+    @Query(value = "SELECT  id,\n" +
+            "        idClient,\n" +
+            "        idTypeSignalement,\n" +
+            "        idRegion,\n" +
+            "        idStatut,\n" +
+            "        nom,\n" +
+            "        prenom,\n" +
+            "        email,\n" +
+            "        dateHeure,\n" +
+            "        designation,\n" +
+            "        typeSignalement,\n" +
+            "        nomRegion,\n" +
+            "        nomStatut\n" +
+            "    FROM signalement_complet\n" +
+            "\t where  id = :id \n" +
+            "    GROUP BY id, idClient, idTypeSignalement,\n" +
+            "            idRegion, idStatut, nom, prenom, email,\n" +
+            "            dateHeure, designation,\n" +
+            "            typeSignalement, nomRegion, nomStatut ", nativeQuery = true)
+    SignalementComplet findByidMore(@Param("id") Long id);
+
 }
