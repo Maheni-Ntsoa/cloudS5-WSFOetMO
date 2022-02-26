@@ -37,12 +37,11 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 @RequestMapping("/api/client")
 public class ClientControlleur {
 
-    public ClientControlleur(PhotosRepository pr, ClientRepository cr, SignalementCompletRepository scr, SignalementRepository sr, FileStorageRepository fsr, TokenClientRepository tcr, TypeSignalementRepository tsr) {
+    public ClientControlleur(PhotosRepository pr, ClientRepository cr, SignalementCompletRepository scr, SignalementRepository sr, TokenClientRepository tcr, TypeSignalementRepository tsr) {
         this.pr = pr;
         this.cr = cr;
         this.scr = scr;
         this.sr = sr;
-        this.fsr = fsr;
         this.tcr = tcr;
         this.tsr = tsr;
     }
