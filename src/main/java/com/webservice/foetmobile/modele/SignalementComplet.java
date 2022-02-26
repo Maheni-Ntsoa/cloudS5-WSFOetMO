@@ -11,26 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Immutable
 @Table(name = "`signalement_complet`")
-@Subselect(" SELECT  id,\n" +
-        "        idClient,\n" +
-        "        idTypeSignalement,\n" +
-        "        idRegion,\n" +
-        "        idStatut,\n" +
-        "        nom,\n" +
-        "        prenom,\n" +
-        "        email,\n" +
-        "        dateHeure,\n" +
-        "        designation,\n" +
-        "        typeSignalement,\n" +
-        "        nomRegion,\n" +
-        "        nomStatut,\n" +
-        "        latitude,\n" +
-        "        longitude\n" +
-        "    FROM signalement_complet\n" +
-        "    GROUP BY id, idClient, idTypeSignalement,\n" +
-        "            idRegion, idStatut, nom, prenom, email,\n" +
-        "            dateHeure, designation,\n" +
-        "            typeSignalement, nomRegion, nomStatut,latitude,longitude ")
+@Subselect("SELECT * from signalement_complet")
 public class SignalementComplet {
 
     @Id

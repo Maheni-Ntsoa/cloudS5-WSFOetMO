@@ -23,6 +23,14 @@ import java.util.*;
 @RequestMapping("/api/adminregion")
 public class AdminRegionControlleur {
 
+    public AdminRegionControlleur(AdminRegionRepository arr,SignalementCompletRepository scr,TokenAdminRegionRepository tarr,TypeSignalementRepository tsr,StatutRepository sr) {
+        this.arr = arr;
+        this.scr = scr;
+        this.tarr = tarr;
+        this.tsr = tsr;
+        this.sr = sr;
+    }
+
     @Autowired
     AdminRegionRepository arr;
 
@@ -37,9 +45,6 @@ public class AdminRegionControlleur {
 
     @Autowired
     StatutRepository sr;
-    public AdminRegionControlleur() {
-        System.out.println("AdminRegionControlleur()");
-    }
 
     private Boolean checkToken(TokenAdminRegion tar) {
         if(tar.getDateexpiration().isAfter(LocalDateTime.now()) == true) {
@@ -74,19 +79,15 @@ public class AdminRegionControlleur {
         AdminRegion ar = new AdminRegion();
         String token = (String) request.getHeader("Authorization");
         System.out.println(token);
-//        try {
-            TokenAdminRegion tar = tarr.findByToken(token.substring(7));
-            System.out.println(checkToken(tar));
-            if(checkToken(tar) == true) {
-                ar = arr.findAdminRegion(tar.getIdadminaegion());
-                lsc = scr.findByIdregion(ar.getIdregion());
-            } else {
-                throw new ResourceNotFoundException("Token expire, veuillez vous reconnecter");
-            }
+        TokenAdminRegion tar = tarr.findByToken(token.substring(7));
+        System.out.println(checkToken(tar));
+        if(checkToken(tar) == true) {
+            ar = arr.findAdminRegion(tar.getIdadminaegion());
+            lsc = scr.findByIdregion(ar.getIdregion());
+        } else {
+            throw new ResourceNotFoundException("Token expire, veuillez vous reconnecter");
+        }
 
-//        } catch (Exception e) {
-//            throw new ResourceNotFoundException("Signalements not found for this id :: " + ar.getIdregion());
-//        }
         return ResponseEntity.ok().body(lsc);
     }
 
