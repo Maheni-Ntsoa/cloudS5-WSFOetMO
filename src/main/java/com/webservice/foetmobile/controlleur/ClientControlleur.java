@@ -60,9 +60,6 @@ public class ClientControlleur {
     SignalementRepository sr;
 
     @Autowired
-    FileStorageRepository fsr;
-
-    @Autowired
     TokenClientRepository tcr;
 
     @Autowired
