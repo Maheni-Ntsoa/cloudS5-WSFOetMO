@@ -106,6 +106,26 @@ public class ClientControlleur {
     public Client inscriptionClient(@Valid @RequestBody Client client) throws ResourceNotFoundException {
         return cr.save(client);
     }
+    
+    @GetMapping(value = "/signalements")
+    public ResponseEntity<Map> listeSignalementParIdClient(HttpServletRequest request) {
+        List<SignalementComplet> lsc = new ArrayList<SignalementComplet>();
+        String token = (String) request.getHeader("Authorization");
+        TokenClient tc = tcr.findByToken(token.substring(7));
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            if (checkToken(tc) == false) {
+                map.put("message", "Token expire, veuillez vous reconnecter");
+            } else {
+                lsc = scr.findByIdclient(tc.getIdclient());
+                map.put("data", lsc);
+            }
+            return new ResponseEntity<>(map, HttpStatus.OK);
+        } catch (Exception e) {
+            map.put("message", e.getMessage());
+            return new ResponseEntity<>(map, HttpStatus.OK);
+        }
+    }
 
     @GetMapping("/typesignalement/all")
     public ResponseEntity<Map> findAllTypeSignalement() {
@@ -172,26 +192,6 @@ public class ClientControlleur {
                 MongoOperations mo = new MongoTemplate(MongoClients.create(), "photoSignalement");
                 mo.findAndRemove(new Query(Criteria.where("idSignalement").is(idSignalement)), Photos.class);
                 map.put("message", Boolean.TRUE);
-            }
-            return new ResponseEntity<>(map, HttpStatus.OK);
-        } catch (Exception e) {
-            map.put("message", e.getMessage());
-            return new ResponseEntity<>(map, HttpStatus.OK);
-        }
-    }
-
-    @GetMapping(value = "/signalements")
-    public ResponseEntity<Map> listeSignalementParIdClient(HttpServletRequest request) {
-        List<SignalementComplet> lsc = new ArrayList<SignalementComplet>();
-        String token = (String) request.getHeader("Authorization");
-        TokenClient tc = tcr.findByToken(token.substring(7));
-        Map<String, Object> map = new HashMap<String, Object>();
-        try {
-            if (checkToken(tc) == false) {
-                map.put("message", "Token expire, veuillez vous reconnecter");
-            } else {
-                lsc = scr.findByIdclient(tc.getIdclient());
-                map.put("data", lsc);
             }
             return new ResponseEntity<>(map, HttpStatus.OK);
         } catch (Exception e) {
