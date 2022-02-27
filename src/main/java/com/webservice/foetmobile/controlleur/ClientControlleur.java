@@ -158,7 +158,7 @@ public class ClientControlleur {
         return ResponseEntity.ok(map);
     }
 
-    @DeleteMapping(value = "/signalements/{idSignalemet}")
+    @DeleteMapping(value = "/signalements/{idSignalement}")
     public ResponseEntity<Map> deleteSignalement(HttpServletRequest request,
                                                  @PathVariable("idSignalement") String idSignalement) {
         String token = (String) request.getHeader("Authorization");
