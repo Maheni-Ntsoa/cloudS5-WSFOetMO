@@ -33,7 +33,7 @@ import java.util.*;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 @RestController
-@CrossOrigin(origin = "http://localhost:8100")
+@CrossOrigin
 @RequestMapping("/api/client")
 public class ClientControlleur {
 
